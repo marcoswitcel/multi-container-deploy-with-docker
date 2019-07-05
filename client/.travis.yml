@@ -1,0 +1,24 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t marcoswitcel/reac-test -f ./client/Dockerfile.dev ./client
+
+script:
+  -  docker run marcoswitcel/reac-test npm test -- --coverage
+
+after_success:
+  - docker build -t marcoswitcel/multi-client ./client
+  - docker build -t marcoswitcel/multi-nginx ./nginx
+  - docker build -t marcoswitcel/multi-server ./server
+  - docker build -t marcoswitcel/multi-worker ./worker
+  # loga no docker hub pela cli do docker
+  # as credenciais de login vem de variaveis de ambiente disponibilizadas
+  # pelo travis, mas que eu setei
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # envia para o docker hub
+  - docker push marcoswitcel/multi-client
+  - docker push marcoswitcel/multi-nginx
+  - docker push marcoswitcel/multi-server
+  - docker push marcoswitcel/multi-worker
